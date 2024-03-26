@@ -1,16 +1,6 @@
 #include <iostream>
 #include <fstream>
 
-// Function to read matrix size from file
-int readMatrixSizeFromFile(const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) return -1; // Return -1 if unable to open file
-    int size;
-    file >> size; // Read matrix size
-    file.close();
-    return size;
-}
-
 // Function to dynamically allocate memory for a matrix
 int** allocateMatrix(int size) {
     int** matrix = new int*[size];
@@ -27,16 +17,10 @@ void deallocateMatrix(int** matrix, int size) {
 }
 
 // Function to read values from a file into a matrix
-void readMatrixFromFile(int** matrix, const std::string& filename, int N) {
-    std::ifstream file(filename);
-    if (!file.is_open()) return; // Return if unable to open file
-    int matrixSize;
-    file >> matrixSize; // Read matrix size from file
-    if (matrixSize != N) return; // Exit if matrix size does not match N
+void readMatrixFromFile(int** matrix, std::ifstream& file, int N) {
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
             file >> matrix[i][j]; // Read matrix elements
-    file.close();
 }
 
 // Function to print a matrix
@@ -82,33 +66,63 @@ int** transposeMatrix(int** matrix, int size) {
 }
 
 int main() {
-    int N = readMatrixSizeFromFile("matrix_input.txt");
-    if (N == -1) return 1; // Exit if unable to read matrix size
+    std::ifstream file("matrix_input.txt");
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file." << std::endl;
+        return 1; // Exit if unable to open file
+    }
+
+    int N;
+    file >> N; // Read matrix size
+
     int** matrix1 = allocateMatrix(N);
     int** matrix2 = allocateMatrix(N);
     int** result;
 
-    readMatrixFromFile(matrix1, "matrix_input.txt", N);
-    readMatrixFromFile(matrix2, "matrix_input.txt", N);
+    // Read the first matrix from the file
+    readMatrixFromFile(matrix1, file, N);
 
+    // Read the second matrix from the file
+    readMatrixFromFile(matrix2, file, N);
+
+    file.close(); // Close the file
+
+    // Print the matrices
     std::cout << "Matrix 1:\n";
     printMatrix(matrix1, N);
 
     std::cout << "\nMatrix 2:\n";
     printMatrix(matrix2, N);
 
+    // Perform addition
     std::cout << "\nAddition Result:\n";
     result = addOrSubtractMatrices(matrix1, matrix2, N, true);
     printMatrix(result, N);
     deallocateMatrix(result, N);
 
+    // Perform subtraction
     std::cout << "\nSubtraction Result:\n";
     result = addOrSubtractMatrices(matrix1, matrix2, N, false);
     printMatrix(result, N);
     deallocateMatrix(result, N);
 
+    // Update an element in matrix1
     std::cout << "\nUpdate Element Result:\n";
     updateElement(matrix1, 1, 1, 99);
     printMatrix(matrix1, N);
 
-    std::cout << "\nMax Value of Matrix 1: " << getMax
+    // Find max value in matrix1
+    std::cout << "\nMax Value of Matrix 1: " << getMaxValue(matrix1, N) << std::endl;
+
+    // Transpose matrix1
+    std::cout << "\nTransposed Matrix 1:\n";
+    result = transposeMatrix(matrix1, N);
+    printMatrix(result, N);
+    deallocateMatrix(result, N);
+
+    // Deallocate memory
+    deallocateMatrix(matrix1, N);
+    deallocateMatrix(matrix2, N);
+
+    return 0;
+}
